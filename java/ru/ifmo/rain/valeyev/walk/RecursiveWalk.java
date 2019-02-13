@@ -35,64 +35,54 @@ public class RecursiveWalk {
             System.out.println("Usage: RecursiveWalk [input file, output file]");
             return;
         }
-        /*
         try {
-            Path temp = Paths.get(args[1]);
-            temp = temp.getParent();
-            if (temp != null) {
-                Files.createDirectories(temp);
+            Path input = Paths.get(args[0]);
+            Path output = Paths.get(args[1]);
+            Path parent = output.getParent();
+            if (parent != null && !Files.exists(parent)) {
+                Files.createDirectories(parent);
             }
-        } catch (InvalidPathException e) {
-            System.out.println("Error with path " + e.getMessage());
-            return;
-        } catch (FileAlreadyExistsException e) {
-            // good
-        } catch (IOException e) {
-            System.out.println("Cannot open file " + e.getMessage());
-            return;
-        } catch (SecurityException e) {
-            System.out.println("Cannot create directories for output file (security reason) " + e.getMessage());
-            return;
-        }
-        */
-        try (
-            BufferedReader in = Files.newBufferedReader(Paths.get(args[0]));
-            BufferedWriter out = Files.newBufferedWriter(Paths.get(args[1]));
-        ) {
-            try {
-                String line;
-                while ((line = in.readLine()) != null) {
-                    try {
-                        Files.walkFileTree(Paths.get(line), new SimpleFileVisitor<Path>() {
-                            @Override
-                            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
-                                throws IOException
-                            {
-                                resolve(out, file.toString(), true);
-                                return FileVisitResult.CONTINUE;
-                            }
+            try (
+                BufferedReader in = Files.newBufferedReader(input);
+                BufferedWriter out = Files.newBufferedWriter(output);
+            ) {
+                try {
+                    String line;
+                    while ((line = in.readLine()) != null) {
+                        try {
+                            Files.walkFileTree(Paths.get(line), new SimpleFileVisitor<Path>() {
+                                @Override
+                                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+                                    throws IOException
+                                {
+                                    resolve(out, file.toString(), true);
+                                    return FileVisitResult.CONTINUE;
+                                }
 
-                            @Override
-                            public FileVisitResult visitFileFailed(Path file, IOException e) 
-                                throws IOException
-                            {
-                                resolve(out, file.toString(), false);
-                                return FileVisitResult.CONTINUE;
-                            }
-                        });
-                    } catch (InvalidPathException | SecurityException e) {
-                        resolve(out, line, false);
+                                @Override
+                                public FileVisitResult visitFileFailed(Path file, IOException e) 
+                                    throws IOException
+                                {
+                                    resolve(out, file.toString(), false);
+                                    return FileVisitResult.CONTINUE;
+                                }
+                            });
+                        } catch (InvalidPathException | SecurityException e) {
+                            resolve(out, line, false);
+                        }
                     }
+                } catch (IOException e) {
+                    System.out.println(e.getMessage());
                 }
+            } catch (SecurityException e) {
+                System.out.println("Cannot open file (security reason) " + e.getMessage());
             } catch (IOException e) {
-                System.out.println(e.getMessage());
+                System.out.println("Cannot open file " + e.getMessage());
             }
         } catch (InvalidPathException e) {
             System.out.println("Error with path " + e.getMessage());
         } catch (IOException e) {
-            System.out.println("Cannot open file " + e.getMessage());
-        } catch (SecurityException e) {
-            System.out.println("Cannot open file (security reason) " + e.getMessage());
+            System.out.println("Cannot create directory for output file " + e.getMessage());
         }
     }
 }
