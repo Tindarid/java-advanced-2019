@@ -31,10 +31,30 @@ public class RecursiveWalk {
     }
 
     public static void main(String[] args) {
-        if (args.length != 2) {
+        if (args == null || args.length != 2 || args[0] == null || args[1] == null) {
             System.out.println("Usage: RecursiveWalk [input file, output file]");
             return;
         }
+        /*
+        try {
+            Path temp = Paths.get(args[1]);
+            temp = temp.getParent();
+            if (temp != null) {
+                Files.createDirectories(temp);
+            }
+        } catch (InvalidPathException e) {
+            System.out.println("Error with path " + e.getMessage());
+            return;
+        } catch (FileAlreadyExistsException e) {
+            // good
+        } catch (IOException e) {
+            System.out.println("Cannot open file " + e.getMessage());
+            return;
+        } catch (SecurityException e) {
+            System.out.println("Cannot create directories for output file (security reason) " + e.getMessage());
+            return;
+        }
+        */
         try (
             BufferedReader in = Files.newBufferedReader(Paths.get(args[0]));
             BufferedWriter out = Files.newBufferedWriter(Paths.get(args[1]));
