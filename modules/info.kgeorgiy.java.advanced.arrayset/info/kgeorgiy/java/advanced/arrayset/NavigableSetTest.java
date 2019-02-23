@@ -1,6 +1,7 @@
 package info.kgeorgiy.java.advanced.arrayset;
 
 import net.java.quickcheck.collection.Pair;
+import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
@@ -22,6 +23,24 @@ import static org.junit.Assert.assertEquals;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class NavigableSetTest extends SortedSetTest {
     @Test
+    public void test18_lower() {
+        for (final Pair<NamedComparator, List<Integer>> pair : withComparator()) {
+            final List<Integer> elements = pair.getSecond();
+            final Comparator<Integer> comparator = pair.getFirst();
+            final NavigableSet<Integer> set = set(elements, comparator);
+            final NavigableSet<Integer> treeSet = treeSet(elements, comparator);
+
+            for (final Integer element : inAndOut(elements)) {
+                assertEquals(
+                        "in lower(" + element + ") (comparator = " + comparator + ", elements = " + elements + ")",
+                        treeSet.lower(element),
+                        set.lower(element)
+                );
+            }
+        }
+    }
+
+    @Test
     public void test19_ceiling() {
         for (final Pair<NamedComparator, List<Integer>> pair : withComparator()) {
             final List<Integer> elements = pair.getSecond();
@@ -34,6 +53,24 @@ public class NavigableSetTest extends SortedSetTest {
                         "in " + "ceiling" + "(" + element + ") (comparator = " + comparator + ", elements = " + elements + ")",
                         treeSet.ceiling(element),
                         set.ceiling(element)
+                );
+            }
+        }
+    }
+
+    @Test
+    public void test20_higher() {
+        for (final Pair<NamedComparator, List<Integer>> pair : withComparator()) {
+            final List<Integer> elements = pair.getSecond();
+            final Comparator<Integer> comparator = pair.getFirst();
+            final NavigableSet<Integer> set = set(elements, comparator);
+            final NavigableSet<Integer> treeSet = treeSet(elements, comparator);
+
+            for (final Integer element : inAndOut(elements)) {
+                assertEquals(
+                        "in " + "higher(" + element + ") (comparator = " + comparator + ", elements = " + elements + ")",
+                        treeSet.higher(element),
+                        set.higher(element)
                 );
             }
         }
@@ -81,6 +118,29 @@ public class NavigableSetTest extends SortedSetTest {
     }
 
     @Test
+    public void test23_navigableHeadSet() {
+        for (final Pair<NamedComparator, List<Integer>> pair : withComparator()) {
+            final List<Integer> elements = pair.getSecond();
+            final Comparator<Integer> comparator = pair.getFirst();
+            final NavigableSet<Integer> set = set(elements, comparator);
+            final NavigableSet<Integer> treeSet = treeSet(elements, comparator);
+
+            for (final Integer element : inAndOut(elements)) {
+                assertEq(
+                        set.headSet(element, true),
+                        treeSet.headSet(element, true),
+                        "in headSet(" + element + ", true) (comparator = " + comparator + ", elements = " + elements + ")"
+                );
+                assertEq(
+                        set.headSet(element, false),
+                        treeSet.headSet(element, false),
+                        "in headSet(" + element + ", false) (comparator = " + comparator + ", elements = " + elements + ")"
+                );
+            }
+        }
+    }
+
+    @Test
     public void test24_navigableSubSet() {
         for (final Pair<NamedComparator, List<Integer>> pair : withComparator()) {
             final List<Integer> elements = pair.getSecond();
@@ -107,6 +167,13 @@ public class NavigableSetTest extends SortedSetTest {
                 }
             }
         }
+    }
+
+    @Test
+    public void test25_mutators() {
+        final NavigableSet<Integer> set = set(Arrays.asList(1, 2, 3), Integer::compareTo);
+        testMutator(set::pollFirst);
+        testMutator(set::pollLast);
     }
 
     @Test
@@ -151,6 +218,15 @@ public class NavigableSetTest extends SortedSetTest {
 
     private static <T> Pair<T, T> pair(final T arg, final T result) {
         return new Pair<>(arg, result);
+    }
+
+    protected void testMutator(final Runnable mutator) {
+        try {
+            mutator.run();
+            Assert.fail("Expected UnsupportedOperationException");
+        } catch (final UnsupportedOperationException ignore) {
+            // Passed
+        }
     }
 
     protected NavigableSet<Integer> set(final List<Integer> elements, final Comparator<Integer> comparator) {

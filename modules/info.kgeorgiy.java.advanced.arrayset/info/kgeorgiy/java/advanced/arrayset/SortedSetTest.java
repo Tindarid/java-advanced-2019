@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static net.java.quickcheck.generator.CombinedGenerators.excludeValues;
 import static net.java.quickcheck.generator.CombinedGenerators.lists;
@@ -25,6 +26,9 @@ import static net.java.quickcheck.generator.PrimitiveGenerators.integers;
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class SortedSetTest extends BaseTest {
+
+    public static final int PERFORMANCE_SIZE = 100_000;
+
     @Test
     public void test01_constructors() {
         final Class<?> token = loadClass();
@@ -44,6 +48,15 @@ public class SortedSetTest extends BaseTest {
     }
 
     @Test
+    public void test03_naturalOrder() {
+        for (final List<Integer> elements : someLists(integers())) {
+            final SortedSet<Integer> set = set(elements);
+            final SortedSet<Integer> treeSet = treeSet(elements);
+            assertEq(set, treeSet, "elements = " + elements);
+        }
+    }
+
+    @Test
     public void test04_externalOrder() {
         for (final Pair<NamedComparator, List<Integer>> pair : withComparator()) {
             final List<Integer> elements = pair.getSecond();
@@ -59,6 +72,35 @@ public class SortedSetTest extends BaseTest {
 
     protected Iterable<Pair<NamedComparator, List<Integer>>> withComparator() {
         return somePairs(comparators, lists(integers()));
+    }
+
+    @Test
+    public void test05_constructorPerformance() {
+        performance("constructor", () -> performanceSet(PERFORMANCE_SIZE));
+    }
+
+    @Test
+    public void test06_immutable() {
+        final SortedSet<Integer> set = set(Collections.singletonList(1));
+        checkUnsupported("add", () -> set.add(1));
+        checkUnsupported("addAll", () -> set.addAll(Collections.singletonList(1)));
+        checkUnsupported("clear", set::clear);
+        checkUnsupported("iterator.remove", () -> {
+            final Iterator<Integer> iterator = set.iterator();
+            iterator.next();
+            iterator.remove();
+        });
+        checkUnsupported("remove", () -> set.remove(1));
+        checkUnsupported("removeAll", () -> set.removeAll(Collections.singletonList(1)));
+        checkUnsupported("retainAll", () -> set.retainAll(Collections.singletonList(0)));
+    }
+
+    private void checkUnsupported(final String method, final Runnable command) {
+        try {
+            command.run();
+            Assert.fail("Method '" + method + "' should throw UnsupportedOperationException");
+        } catch (final UnsupportedOperationException ignore) {
+        }
     }
 
     @Test
@@ -81,6 +123,16 @@ public class SortedSetTest extends BaseTest {
     }
 
     @Test
+    public void test08_containsPerformance() {
+        performance("contains", () -> {
+            final SortedSet<Integer> set = performanceSet(PERFORMANCE_SIZE);
+            for (final Integer element : set) {
+                Assert.assertTrue(null, set.contains(element));
+            }
+        });
+    }
+
+    @Test
     public void test09_containsAll() {
         for (final Pair<NamedComparator, List<Integer>> pair : withComparator()) {
             final List<Integer> elements = pair.getSecond();
@@ -97,6 +149,28 @@ public class SortedSetTest extends BaseTest {
                 Assert.assertEquals("containsAll(" + l + ") " + context, treeSet.containsAll(l), set.containsAll(l));
             }
         }
+    }
+
+    @Test
+    public void test10_containsAllPerformance() {
+        performance("contains", () -> {
+            final SortedSet<Integer> set = performanceSet(PERFORMANCE_SIZE);
+            Assert.assertTrue(null, set.containsAll(new ArrayList<>(set)));
+        });
+    }
+
+    private void performance(final String description, final Runnable runnable) {
+        runnable.run();
+
+        final long start = System.currentTimeMillis();
+        runnable.run();
+        final long time = System.currentTimeMillis() - start;
+        System.out.println("    " + description + " done in " + time + "ms");
+        Assert.assertTrue(description + " works too slow", time < 200);
+    }
+
+    private SortedSet<Integer> performanceSet(final int size) {
+        return set(new Random().ints().limit(size).boxed().collect(Collectors.toList()));
     }
 
     private List<Integer> toList(final SortedSet<Integer> set) {
@@ -132,7 +206,7 @@ public class SortedSetTest extends BaseTest {
         set.addAll(elements);
         return set;
     }
-
+    
     protected final class NamedComparator implements Comparator<Integer> {
         private final String name;
         private final Comparator<Integer> comparator;
@@ -204,6 +278,24 @@ public class SortedSetTest extends BaseTest {
         }
     }
 
+    @Test
+    public void test13_tailSet() {
+        for (final Pair<NamedComparator, List<Integer>> pair : withComparator()) {
+            final List<Integer> elements = pair.getSecond();
+            final Comparator<Integer> comparator = pair.getFirst();
+            final SortedSet<Integer> set = set(elements, comparator);
+            final SortedSet<Integer> treeSet = treeSet(elements, comparator);
+
+            for (final Integer element : inAndOut(elements)) {
+                assertEq(
+                        set.tailSet(element),
+                        treeSet.tailSet(element),
+                        "in tailSet(" + element + ") (comparator = " + comparator + ", elements = " + elements + ")"
+                );
+            }
+        }
+    }
+
     protected Collection<Integer> inAndOut(final List<Integer> elements) {
         return concat(elements, someOneOf(excludeValues(integers(), elements)));
     }
@@ -243,6 +335,16 @@ public class SortedSetTest extends BaseTest {
     }
 
     @Test
+    public void test15_tailSetPerformance() {
+        performance("tailSet", () -> {
+            final SortedSet<Integer> set = performanceSet(PERFORMANCE_SIZE);
+            for (final Integer element : set) {
+                Assert.assertTrue(null, set.tailSet(element).contains(element));
+            }
+        });
+    }
+
+    @Test
     public void test16_first() {
         for (final Pair<NamedComparator, List<Integer>> pair : withComparator()) {
             final List<Integer> elements = pair.getSecond();
@@ -258,6 +360,26 @@ public class SortedSetTest extends BaseTest {
                 }
             } else {
                 Assert.assertEquals("first() " + "(comparator = " + comparator + ", elements = " + elements + ")", set(elements, comparator).first(), set.first());
+            }
+        }
+    }
+
+    @Test
+    public void test17_last() {
+        for (final Pair<NamedComparator, List<Integer>> pair : withComparator()) {
+            final List<Integer> elements = pair.getSecond();
+            final Comparator<Integer> comparator = pair.getFirst();
+
+            final SortedSet<Integer> set = set(elements, comparator);
+            if (set.isEmpty()) {
+                try {
+                    set.last();
+                    Assert.fail("last() should throw NoSuchElementException for empty set");
+                } catch (final NoSuchElementException e) {
+                    // ok
+                }
+            } else {
+                Assert.assertEquals("last() " + "(comparator = " + comparator + ", elements = " + elements + ")", set(elements, comparator).last(), set.last());
             }
         }
     }
