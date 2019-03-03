@@ -100,6 +100,9 @@ public class ArraySet<T> extends AbstractSet<T> implements NavigableSet<T> {
     }
 
     public SortedSet<T> subSet(T fromElement, T toElement) {
+        if (comp != null && comp.compare(fromElement, toElement) > 0) {
+            throw new IllegalArgumentException();
+        }
         return subSet(fromElement, true, toElement, false);
     }
 
