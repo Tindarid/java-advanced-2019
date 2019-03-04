@@ -11,12 +11,24 @@ import java.util.function.*;
 import java.util.stream.*;
 
 public class Implementor implements Impler {
-    private static final String PARAMETER = " param";
+    private static final String PARAMETER = " p";
     private static final String NEW_LINE = System.lineSeparator();
     private static final String BEGIN_BLOCK = " {" + NEW_LINE;
     private static final String END_BLOCK = "}" + NEW_LINE;
     private static final String END_LINE = ";" + NEW_LINE;
+    private static final String COMMA = ",";
     private static final String SPACE = " ";
+    private static final String EMPTY = "";
+    private static final String TAB = "    ";
+    private static final String TAB2 = TAB + TAB;
+    private static final String DEFAULT_PREFIX = "java.lang.";
+
+    private String resolveType(String type) {
+        if (type.startsWith(DEFAULT_PREFIX)) {
+            type = type.substring(DEFAULT_PREFIX.length());
+        }
+        return type;
+    }
 
     private String getName(Class<?> token) {
         return token.getSimpleName() + "Impl";
@@ -26,16 +38,14 @@ public class Implementor implements Impler {
         return Modifier.toString(executable.getModifiers() & ~Modifier.TRANSIENT & ~Modifier.ABSTRACT);
     }
 
-    private String resolveParameters(Executable executable) {
+    private String resolveParameters(Class<?>[] parameters, boolean needType) {
         StringBuilder builder = new StringBuilder();
-        Class<?>[] parameters = executable.getParameterTypes();
         for (int i = 0; i < parameters.length; ++i) {
             if (i != 0) {
-                builder.append(", ");
+                builder.append(COMMA + SPACE);
             }
-            builder.append(parameters[i].getCanonicalName())
-                .append(PARAMETER)
-                .append(Integer.toString(i));
+            builder.append(needType ? resolveType(parameters[i].getCanonicalName()) : EMPTY);
+            builder.append(PARAMETER).append(Integer.toString(i + 1));
         }
         return builder.toString();
     }
@@ -44,43 +54,29 @@ public class Implementor implements Impler {
         StringBuilder builder = new StringBuilder();
         Class<?>[] exceptions = executable.getExceptionTypes();
         if (exceptions.length != 0) {
-            builder.append(" throws ")
-                .append(
+            builder.append(" throws ").append(
                     Arrays.stream(exceptions)
                     .map(Class::getCanonicalName)
-                    .collect(Collectors.joining(", "))
+                    .collect(Collectors.joining(COMMA + SPACE))
                 );
         }
         return builder.toString();
     }
 
-    private String resolveSignature(Executable executable, Class<?> token) {
+    private String resolveSignature(Executable executable, Class<?> token, Class<?>[] parameters) {
         StringBuilder builder = new StringBuilder();
         builder.append(resolveModifiers(executable)).append(SPACE);
         if (token == null) {
             Method method = (Method) executable;
-            builder.append(method.getReturnType().getCanonicalName())
+            builder.append(resolveType(method.getReturnType().getCanonicalName()))
                 .append(SPACE)
                 .append(method.getName());
         } else {
             builder.append(getName(token));
         }
         builder.append("(")
-            .append(resolveParameters(executable))
-            .append(") ")
-            .append(resolveExceptions(executable));
-        return builder.toString();
-    }
-
-    private String resolveBody(Constructor constructor) {
-        StringBuilder builder = new StringBuilder();
-        Class<?>[] parameters = constructor.getParameterTypes();
-        for (int i = 0; i < parameters.length; ++i) {
-            if (i != 0) {
-                builder.append(", ");
-            }
-            builder.append(PARAMETER).append(Integer.toString(i));
-        }
+            .append(resolveParameters(parameters, true))
+            .append(")");
         return builder.toString();
     }
 
@@ -89,29 +85,37 @@ public class Implementor implements Impler {
         if (returnType.isPrimitive()) {
             String typeName = method.getReturnType().getSimpleName();
             if (typeName.equals("boolean")) {
-                return "false";
+                return " false";
             } else if (typeName.equals("void")) {
-                return "";
+                return EMPTY;
             } else {
-                return "0";
+                return " 0";
             }
         } else {
-            return "null";
+            return " null";
         }
     }
 
     private String resolveExecutable(Executable executable, Class<?> token) {
         StringBuilder builder = new StringBuilder();
-        builder.append(resolveSignature(executable, token)).append(BEGIN_BLOCK);
+        Class<?>[] parameters = executable.getParameterTypes();
+        builder.append(TAB)
+            .append(resolveSignature(executable, token, parameters))
+            .append(resolveExceptions(executable))
+            .append(BEGIN_BLOCK);
+        builder.append(TAB2);
         if (token == null) {
-            builder.append("return ")
+            builder.append("return")
                 .append(resolveBody((Method) executable));
         } else {
             builder.append("super(")
-                .append(resolveBody((Constructor) executable))
+                .append(resolveParameters(parameters, false))
                 .append(")");
         }
-        builder.append(END_LINE).append(END_BLOCK);
+        builder.append(END_LINE)
+            .append(TAB)
+            .append(END_BLOCK)
+            .append(NEW_LINE);
         return builder.toString();
     }
 
@@ -121,7 +125,8 @@ public class Implementor implements Impler {
         if (!packageName.isEmpty()) {
             builder.append("package ")
                 .append(packageName)
-                .append(END_LINE);
+                .append(END_LINE)
+                .append(NEW_LINE);
         }
         builder.append("public class ")
             .append(getName(token))
@@ -138,16 +143,16 @@ public class Implementor implements Impler {
 
         public TrueMethod(Method method) {
             this.method = method;
-            this.signature = resolveSignature(method, null);
+            this.signature = resolveSignature(method, null, method.getParameterTypes());
         }
 
         public Method getMethod() {
             return method;
         }
 
-        public boolean equals(Object obj) {
-            if (obj instanceof TrueMethod) {
-                return signature.equals(((TrueMethod) obj).signature);
+        public boolean equals(Object rhs) {
+            if (rhs instanceof TrueMethod) {
+                return signature.equals(((TrueMethod) rhs).signature);
             }
             return false;
         }
