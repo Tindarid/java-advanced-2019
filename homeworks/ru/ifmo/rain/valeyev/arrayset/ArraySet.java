@@ -17,6 +17,10 @@ public class ArraySet<T> extends AbstractSet<T> implements NavigableSet<T> {
         public int size() {
             return content.size();
         }
+
+        public List<T> getContent() {
+            return content;
+        }
     }
 
     private final Comparator<? super T> comp;
@@ -58,7 +62,7 @@ public class ArraySet<T> extends AbstractSet<T> implements NavigableSet<T> {
     }
 
     public boolean contains(Object obj) {
-        return Collections.binarySearch(content, (T)obj, comp) >= 0;
+        return Collections.binarySearch(content, (T) obj, comp) >= 0;
     }
 
     private T getElement(int index) {
@@ -115,7 +119,13 @@ public class ArraySet<T> extends AbstractSet<T> implements NavigableSet<T> {
     }
 
     public NavigableSet<T> descendingSet() {
-        return new ArraySet<>(new ReversedList<T>(content), Collections.reverseOrder(comp));
+        List<T> list = this.content;
+        if (list instanceof ReversedList) {
+            list = ((ReversedList) list).getContent();
+        } else {
+            list = new ReversedList<T>(list);
+        }
+        return new ArraySet<>(list, Collections.reverseOrder(comp));
     }
 
     public T pollFirst() {
