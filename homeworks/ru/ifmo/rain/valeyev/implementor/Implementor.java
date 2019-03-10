@@ -195,6 +195,20 @@ public class Implementor implements Impler {
         if (Modifier.isFinal(token.getModifiers())) {
             throw new ImplerException("Cannot implement: is final class");
         }
+        if (token.isInterface()) {
+            return;
+        }
+        boolean onlyStaticMethods = true;
+        for (Method method : token.getDeclaredMethods()) {
+            onlyStaticMethods &= Modifier.isStatic(method.getModifiers());
+        }
+        boolean onlyPrivateConstructors = true;
+        for (Constructor constructor : token.getDeclaredConstructors()) {
+            onlyPrivateConstructors &= Modifier.isPrivate(constructor.getModifiers());
+        }
+        if (onlyStaticMethods && onlyPrivateConstructors) {
+            throw new ImplerException("Cannot implement: is utility class");
+        }
     }
 
     public void implement(Class<?> token, Path root) throws ImplerException {
