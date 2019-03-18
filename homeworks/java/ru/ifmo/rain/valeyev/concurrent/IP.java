@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.LinkedList;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.NoSuchElementException;
 import java.util.stream.Stream;
 import java.util.stream.Collectors;
 
@@ -41,6 +42,9 @@ public class IP implements ListIP {
     }
 
     public <T> T maximum(int threads, List<? extends T> values, Comparator<? super T> comparator) throws InterruptedException {
+        if (values.isEmpty()) {
+            throw new NoSuchElementException("List of values is empty");
+        }
         Function<List<? extends T>, ? extends T> task = (list) -> Collections.max(list, comparator);
         return apply(threads, values, task, task);
     }
