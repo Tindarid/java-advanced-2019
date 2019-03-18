@@ -16,7 +16,17 @@ import java.util.jar.JarOutputStream;
 import java.net.URISyntaxException;
 import java.security.CodeSource;
 
+/**
+ * Generates Java code for specified class, compiles it and packs in jar
+ */
 public class JarImplementor extends Implementor implements JarImpler {
+    /**
+     * Creates jar of class
+     * @param token class, which jar file is needed
+     * @param root source files folder
+     * @param jarFile destination jar
+     * @throws ImplerException if IO Error occured during creating
+     */
     private void createJar(Class<?> token, Path root, Path jarFile) throws ImplerException {
         Manifest manifest = new Manifest();
         Attributes attributes = manifest.getMainAttributes();
@@ -30,6 +40,12 @@ public class JarImplementor extends Implementor implements JarImpler {
         }
     }
 
+    /**
+     * Gets class path of specified class
+     * @param token - class, which class path is needed
+     * @throws ImplerException if class path cannot be resolved
+     * @return specified class path of class
+     */
     private static String getClassPath(Class<?> token) throws ImplerException {
         try {
             CodeSource source = token.getProtectionDomain().getCodeSource();
@@ -42,6 +58,12 @@ public class JarImplementor extends Implementor implements JarImpler {
         }
     }
 
+    /**
+     * Compiles file using specified classpath
+     * @param classPath path to class folder
+     * @param filename path of file to compile
+     * @throws ImplerException if no compiler found or compiler exits with code not equal to 0
+     */
     private void compile(String classPath, String filename) throws ImplerException {
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         if (compiler == null) {
@@ -53,6 +75,12 @@ public class JarImplementor extends Implementor implements JarImpler {
         }
     }
 
+    /**
+     * Implements jar of class name, creates temp directory, compiles files and then cleans temp directory
+     * @param token class to implement
+     * @param jarFile path of destination jar
+     * @throws ImplerException if some kind of error occured during implementing
+     */
     public void implementJar(Class<?> token, Path jarFile) throws ImplerException {
         if (token == null || jarFile == null) {
             throw new ImplerException("Null arguments passed to implementJar");
@@ -96,6 +124,16 @@ public class JarImplementor extends Implementor implements JarImpler {
         }
     }
 
+    /**
+     * Main method
+     * <p>
+     * First argument should be <tt>-class<tt> or <tt>-jar<tt>
+     * <p>
+     * Second argument must be classname
+     * <p>
+     * Third argument in case of "-jar" option should be name of jar file to generate
+     * @param args arguments
+     */
     public static void main(String[] args) {
         if (args == null || !(args.length == 2 || args.length == 3)) {
             printUsage();
@@ -126,6 +164,9 @@ public class JarImplementor extends Implementor implements JarImpler {
         }
     }
 
+    /**
+     * Prints usage of JarImplementor via {@link System.out}
+     */
     public static void printUsage() {
         System.out.println("Usage:");
         System.out.println("java Implementor -class [class or interface to implement]");

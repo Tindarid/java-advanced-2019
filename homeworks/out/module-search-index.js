@@ -1,1 +1,0 @@
-moduleSearchIndex = [{"l":"ru.ifmo.rain.valeyev.implementor"}]
