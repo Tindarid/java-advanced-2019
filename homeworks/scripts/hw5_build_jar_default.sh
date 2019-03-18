@@ -1,15 +1,16 @@
 #!/bin/bash
 
-myjava=../java/ru/ifmo/rain/valeyev/implementor
-goshajava=../java/info/kgeorgiy/java/advanced/implementor
+prefix=../java
+myjava=ru/ifmo/rain/valeyev/implementor
+goshajava=info/kgeorgiy/java/advanced/implementor
 
 echo Compiling
-javac $goshajava/JarImpler.java
-javac -cp ../java $myjava/JarImplementor.java
+javac $prefix/$goshajava/JarImpler.java
+javac -cp $prefix $prefix/$myjava/JarImplementor.java
 
 echo Packing in jar
-jar cfe app.jar ru.ifmo.rain.valeyev.implementor.JarImplementor $myjava/*.class $goshajava/*.class
+jar cfe implementor.jar ru.ifmo.rain.valeyev.implementor.JarImplementor -C $prefix $goshajava -C $prefix $myjava
 
 echo Deleting temp .class files
-rm $myjava/*.class
-rm $goshajava/*.class
+rm $prefix/$myjava/*.class
+rm $prefix/$goshajava/*.class
