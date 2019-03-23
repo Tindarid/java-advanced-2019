@@ -2,10 +2,10 @@
 
 modulepath=../../lib:../../artifacts 
 classpath=../java
-usage="Usage: hw_test [number] [hard or easy]"
 my=ru.ifmo.rain.valeyev
 gosha=info.kgeorgiy.java.advanced
 exec="java -cp $classpath -p $modulepath -m"
+usage="Usage: hw_test [number] [hard or easy]"
 
 if [ $# != 2 ]
 then
