@@ -63,9 +63,9 @@ elif [ $1 == 7 ]
 then
   if [ $2 == easy ]
   then
-    $exec $gosha.concurrent scalar $my.concurrent.IP
+    $exec $gosha.concurrent scalar $my.concurrent.IterativeParallelism
   else
-    $exec $gosha.concurrent list $my.concurrent.IP
+    $exec $gosha.concurrent list $my.concurrent.IterativeParallelism
   fi
 else
   echo $usage

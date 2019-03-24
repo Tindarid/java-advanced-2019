@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 import info.kgeorgiy.java.advanced.concurrent.ListIP;
 
-public class IP implements ListIP {
+public class IterativeParallelism implements ListIP {
     private <T, R> List<R> resolve(int allowedThreads, final List<? extends T> values, 
                              final Function<List<? extends T>, ? extends R> task) throws InterruptedException {
         final int size = values.size();
