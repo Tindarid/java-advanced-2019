@@ -44,28 +44,25 @@
 
 Класс [JarImplementor](java/ru/ifmo/rain/valeyev/implementor/JarImplementor.java), который генерирует реализации классов и интерфейсов, а также может запаковать реализацию в .jar файл (реализует интерфейс [JarImpler](../modules/info.kgeorgiy.java.advanced.implementor/info/kgeorgiy/java/advanced/implementor/JarImpler.java)).
 
-Формат запуска №1: `java JarImplementor -class <class to implement>`
-
-В результате работы будет сгенерирован Java-код класса с суффиксом "Impl", расширяющий (реализующий) указанный класс (интерфейс).
-
-Методы сгенерированного класса игнорируют свои аргументы и возвращают значения по умолчанию.
-
-Формат запуска №2: `java JarImplementor -jar <class to implement> <name of jar file>`
-
-В результате работы будет сгенерирован Java-код класса с суффиксом "Impl", расширяющий (реализующий) указанный класс (интерфейс) и запакованный в указанный .jar файл.
+* Формат запуска №1: `java JarImplementor -class <class to implement>`
+** В результате работы будет сгенерирован Java-код класса с суффиксом "Impl", расширяющий (реализующий) указанный класс (интерфейс).
+** Методы сгенерированного класса игнорируют свои аргументы и возвращают значения по умолчанию.
+* Формат запуска №2: `java JarImplementor -jar <class to implement> <name of jar file>`
+** В результате работы будет сгенерирован Java-код класса с суффиксом "Impl", расширяющий (реализующий) указанный класс (интерфейс) и запакованный в указанный .jar файл.
 
 [Модуляризованное решение](java-modules/ru.ifmo.rain.valeyev.implementor/)
+
 [Скрипты для сборки и запуска(префикс "hw5")](scripts/)
 
 ## HW6
 Тема: `Javadoc`
 
-[Скрипт](scripts/hw6/hw6_javadoc.sh) для генерации документации класса [JarImplementor](java/ru/ifmo/rain/valeyev/implementor/JarImplementor.java)
+[Скрипт](scripts/hw6_javadoc.sh) для генерации документации класса [JarImplementor](java/ru/ifmo/rain/valeyev/implementor/JarImplementor.java)
 
 ## HW7
 Тема: `Итеративный параллелизм`
 
-Класс [IterativeParallelism](ru/ifmo/rain/valeyev/concurrent/IterativeParallelism.java), который обрабатывает списки в несколько потоков.
+Класс [IterativeParallelism](java/ru/ifmo/rain/valeyev/concurrent/IterativeParallelism.java), который обрабатывает списки в несколько потоков.
 
 Реализованы следующие функции:
 
