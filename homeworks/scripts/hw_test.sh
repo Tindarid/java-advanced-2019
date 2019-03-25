@@ -67,6 +67,14 @@ then
   else
     $exec $gosha.concurrent list $my.concurrent.IterativeParallelism
   fi
+elif [ $1 == 8 ]
+then
+  if [ $2 == easy ]
+  then
+    $exec $gosha.mapper scalar $my.mapper.ParallelMapperImpl,$my.mapper.IterativeParallelism
+  else
+    $exec $gosha.mapper list $my.mapper.ParallelMapperImpl,$my.mapper.IterativeParallelism
+  fi
 else
   echo $usage
 fi
