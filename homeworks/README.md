@@ -75,3 +75,14 @@
 * `join(threads, list)` — конкатенация строковых представлений элементов списка.
 
 Во все функции передается параметр `threads` — сколько потоков надо использовать при вычислении.
+
+## HW8
+Тема: `Параллельный запуск`
+
+Класс [ParallelMapperImpl](/java/ru/ifmo/rain/valeyev/mapper/ParallelMapperImpl), реализующий интерфейс [ParallelMapper](../modules/info.kgeorgiy.java.advanced.mapper/info/kgeorgiy/java/advanced/mapper/ParallelMapper.java);
+
+Задания на исполнения накапливаются в очереди и обрабатываются по мере поступления.
+
+К одному ParallelMapper могут одновременно обращаться несколько клиентов.
+
+IterativeParallelism теперь может использовать ParallelMapper
