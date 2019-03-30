@@ -104,6 +104,17 @@ public class ArraySet<T> extends AbstractSet<T> implements NavigableSet<T> {
     }
 
     public SortedSet<T> subSet(T fromElement, T toElement) {
+        if (comp != null) {
+            if (comp.compare(fromElement, toElement) > 0) {
+                throw new IllegalArgumentException("Not allowed borders");
+            }
+        } else {
+            if (fromElement instanceof Comparable && toElement instanceof Comparable) {
+                if (((Comparable) fromElement).compareTo((Comparable) toElement) > 0) {
+                    throw new IllegalArgumentException("Not allowed borders");
+                }
+            }
+        }
         return subSet(fromElement, true, toElement, false);
     }
 
