@@ -13,6 +13,12 @@ then
   exit
 fi
 
+if [[ $2 == advanced && $1 == 3 ]]
+then
+  $exec $gosha.student AdvancedStudentGroupQuery $my.student.StudentDB
+  exit
+fi
+
 if [[ $2 != easy && $2 != hard ]]
 then
   echo $usage

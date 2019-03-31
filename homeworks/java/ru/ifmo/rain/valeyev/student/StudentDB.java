@@ -2,13 +2,13 @@ package ru.ifmo.rain.valeyev.student;
 
 import info.kgeorgiy.java.advanced.student.Student;
 import info.kgeorgiy.java.advanced.student.Group;
-import info.kgeorgiy.java.advanced.student.StudentGroupQuery;
+import info.kgeorgiy.java.advanced.student.AdvancedStudentGroupQuery;
 
 import java.util.*;
 import java.util.function.*;
 import java.util.stream.*;
 
-public class StudentDB implements StudentGroupQuery {
+public class StudentDB implements AdvancedStudentGroupQuery {
     private static final Comparator<Student> nameComparator = Comparator
         .comparing(Student::getLastName, String::compareTo)
         .thenComparing(Student::getFirstName, String::compareTo)
@@ -112,8 +112,8 @@ public class StudentDB implements StudentGroupQuery {
     public String largestGroupName(Collection<Student> students, Function<List<Student>, Integer> functor) {
         return grouping(students)
             .max(Comparator
-                    .comparingInt((Map.Entry<String, List<Student>> entry) -> functor.apply(entry.getValue()))
-                    .thenComparing(Map.Entry::getKey, Collections.reverseOrder(String::compareTo)))
+                 .comparingInt((Map.Entry<String, List<Student>> entry) -> functor.apply(entry.getValue()))
+                 .thenComparing(Map.Entry::getKey, Collections.reverseOrder(String::compareTo)))
             .map(Map.Entry::getKey).orElse("");
     }
 
@@ -131,5 +131,20 @@ public class StudentDB implements StudentGroupQuery {
      */
     public String getLargestGroupFirstName(Collection<Student> students) {
         return largestGroupName(students, list -> getDistinctFirstNames(list).size());
+    }
+
+    /**
+     * Returns the name of the student such that most number of groups has student with that name.
+     * If there are more than one such name, the largest one is returned.
+     */
+    public String getMostPopularName(Collection<Student> students) {
+        return students.stream()
+               .collect(Collectors.groupingBy(s -> s.getFirstName() + " " + s.getLastName(), 
+                        Collectors.mapping(Student::getGroup, Collectors.toSet())))
+               .entrySet().stream()
+               .max(Comparator
+                    .comparingInt((Map.Entry<String, Set<String>> entry) -> entry.getValue().size())
+                    .thenComparing(Map.Entry::getKey, String::compareTo))
+               .map(Map.Entry::getKey).orElse("");
     }
 }
