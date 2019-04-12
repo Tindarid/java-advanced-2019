@@ -81,7 +81,14 @@ then
   else
     $exec $gosha.mapper list $my.mapper.ParallelMapperImpl,$my.mapper.IterativeParallelism
   fi
+elif [ $1 == 9 ]
+then
+  if [ $2 == easy ]
+  then
+    $exec $gosha.crawler easy $my.crawler.WebCrawler
+  else
+    $exec $gosha.crawler hard $my.crawler.WebCrawler
+  fi
 else
   echo $usage
 fi
-
