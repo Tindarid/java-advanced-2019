@@ -1,14 +1,16 @@
 package ru.ifmo.rain.valeyev.crawler;
 
-import java.util.Queue;
-import java.util.ArrayDeque;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import java.io.IOException;
+import java.net.MalformedURLException;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import info.kgeorgiy.java.advanced.crawler.Crawler;
 import info.kgeorgiy.java.advanced.crawler.Result;
@@ -18,55 +20,109 @@ import info.kgeorgiy.java.advanced.crawler.URLUtils;
 
 public class WebCrawler implements Crawler {
     private final Downloader downloader;
-    private final int downloaders;
-    private final int extractors;
+    private final ExecutorService downloadersPool;
+    private final ExecutorService extractorsPool;
     private final int perHost;
+    private final IOException defaultValue = new IOException();
 
     public WebCrawler(Downloader downloader, int downloaders, int extractors, int perHost) {
         this.downloader = downloader;
-        this.downloaders = downloaders;
-        this.extractors = extractors;
+        downloadersPool = Executors.newFixedThreadPool(downloaders);
+        extractorsPool = Executors.newFixedThreadPool(extractors);
         this.perHost = perHost;
     }
 
     public Result download(final String url, final int depth) {
-        final Queue<String> queue = new ArrayDeque<>();
-        final Queue<Integer> depthQueue = new ArrayDeque<>();
-        final Set<String> urls = new HashSet<>();
-        final Map<String, IOException> errors = new HashMap<>();
-
-        queue.add(url);
-        depthQueue.add(depth);
-
-        while (!queue.isEmpty()) {
-            final String current = queue.poll();
-            final Integer currentDepth = depthQueue.poll();
-
-            if (urls.contains(current) || errors.containsKey(current)) {
-                continue;
-            }
-
-            try {
-                final Document document = downloader.download(current);
-                urls.add(current);
-
-                if (currentDepth == 1) {
-                    continue;
-                }
-
-                for (String link : document.extractLinks()) {
-                    queue.add(link);
-                    depthQueue.add(depth - 1);
-                }
-            } catch (IOException e) {
-                errors.put(current, e);
+        if (depth < 1) {
+            throw new IllegalArgumentException("Depth value must be positive integer");
+        }
+        final List<String> urls = new ArrayList<>();
+        final Map<String, IOException> errors = new ConcurrentHashMap<>();
+        final Map<String, Integer> hosts = new ConcurrentHashMap<>();
+        final AtomicInteger workers = new AtomicInteger();
+        downloadTask(url, workers, errors, depth, hosts);
+        while (workers.get() > 0) { 
+            
+        }
+        for (Map.Entry<String, IOException> entry : errors.entrySet()) {
+            if (entry.getValue() == defaultValue) {
+                String key = entry.getKey();
+                urls.add(key);
+                errors.remove(key);
             }
         }
-
-        return new Result(new ArrayList<String>(urls), errors);
+        return new Result(urls, errors);
     }
 
     public void close() {
+        downloadersPool.shutdown();
+        extractorsPool.shutdown();
+    }
 
+    private void downloadTask(final String url, final AtomicInteger workers,
+                              final Map<String, IOException> result, final int depth, final Map<String, Integer> hosts) {
+        workers.incrementAndGet();
+        downloadersPool.execute(() -> {
+            try {
+                String host = URLUtils.getHost(url);
+                try {
+                    synchronized (result) {
+                        if (result.containsKey(url)) {
+                            return;
+                        }
+                        result.put(url, defaultValue);
+                    }
+                    synchronized (hosts) {
+                        if (hosts.containsKey(host)) {
+                            try {
+                                while (hosts.get(host) == perHost) {
+                                    hosts.wait();
+                                }
+                            } catch (InterruptedException e) {
+                                //
+                            }
+                            hosts.put(host, hosts.get(host) + 1);
+                        } else {
+                            hosts.put(host, 1);
+                        }
+                    }
+                    final Document document = downloader.download(url);
+                    synchronized (hosts) {
+                        hosts.put(host, hosts.get(host) - 1);
+                        hosts.notifyAll();
+                    }
+                    if (depth > 1) {
+                        extractTask(url, workers, result, depth - 1, hosts, document);
+                    }
+                } catch (IOException e) {
+                    result.put(url, e);
+                    synchronized (hosts) {
+                        hosts.put(host, hosts.get(host) - 1);
+                        hosts.notifyAll();
+                    }
+                }
+            } catch (MalformedURLException e) {
+                //
+            } finally {
+                workers.decrementAndGet();
+            }
+        });
+    }
+
+    private void extractTask(final String url, final AtomicInteger workers,
+                             final Map<String, IOException> result, final int depth, final Map<String, Integer> hosts,
+                             final Document document) {
+        workers.incrementAndGet();
+        extractorsPool.execute(() -> {
+            try {
+                for (String newUrl : document.extractLinks()) {
+                    downloadTask(newUrl, workers, result, depth, hosts);
+                }
+            } catch (IOException e) {
+                result.put(url, e);
+            } finally {
+                workers.decrementAndGet();
+            }
+        });
     }
 }
