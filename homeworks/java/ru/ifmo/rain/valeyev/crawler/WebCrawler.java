@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.nio.file.Paths;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
@@ -15,6 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import info.kgeorgiy.java.advanced.crawler.Crawler;
 import info.kgeorgiy.java.advanced.crawler.Result;
 import info.kgeorgiy.java.advanced.crawler.Downloader;
+import info.kgeorgiy.java.advanced.crawler.CachingDownloader;
 import info.kgeorgiy.java.advanced.crawler.Document;
 import info.kgeorgiy.java.advanced.crawler.URLUtils;
 
@@ -124,5 +126,32 @@ public class WebCrawler implements Crawler {
                 workers.decrementAndGet();
             }
         });
+    }
+
+    public void main(String[] args) {
+        if (args == null || args.length != 5) {
+            System.out.println("Usage: WebCrawler url [depth [downloaders [extractors [perHost]]]]");
+            return;
+        }
+        final String url = args[0];
+        final int depth = Integer.parseInt(args[1]);
+        final int downloaders = Integer.parseInt(args[2]);
+        final int extractors = Integer.parseInt(args[3]);
+        final int perHost = Integer.parseInt(args[4]);
+        try (Crawler crawler = new WebCrawler(new CachingDownloader(Paths.get(url)), downloaders, extractors, perHost)) {
+            Result result = crawler.download(url, depth);
+            System.out.println("Downloaded OK:");
+            for (String link : result.getDownloaded()) {
+                System.out.println(link);
+            }
+            System.out.println("Errors:");
+            for (Map.Entry<String, IOException> entry : result.getErrors().entrySet()) {
+                System.out.println(entry.getValue() + " " + entry.getKey());
+            }
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        } catch (NumberFormatException e) {
+            System.out.println(e.getMessage());
+        }
     }
 }

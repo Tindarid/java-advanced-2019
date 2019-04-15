@@ -87,7 +87,7 @@ then
   then
     $exec $gosha.crawler easy $my.crawler.WebCrawler
   else
-    $exec $gosha.crawler hard $my.crawler.WebCrawler
+    $exec $gosha.crawler hard $my.crawler.WebCrawler yi
   fi
 else
   echo $usage
